@@ -6,15 +6,14 @@ public class Des {
 
     public String cheangeToBin(String message) {
 
-        while (message.length() % 8 != 0) { //Podział textu na ploki po 8 znaków , jeśli długość textu nie jest podzielna przez 8
-            message += "\u0000";            //dopisywany jest znak null = "\u0000"
+
+        while (message.length() % 8 != 0) { //Dopuki nie bedzie mozna podzielić tekstu na minimum 8 znaków dpoisuj zank null
+            message += "\u0000";
         }
 
         int blockNumber = message.length()/8;   //Ilość bloków textu każdy blok zawiera 8 znaków
         String[] tableMessageBin = new String[blockNumber];  //Tablice do , której zostanie zapisany text jako reprezętacja binarna
         byte[] byteTable = message.getBytes();  //tablica do której zostaną zapisane bity
-
-
 
         String messageBin;
         for(int i = 0; i < blockNumber; i++){
@@ -31,6 +30,7 @@ public class Des {
                     binMessage <<= 8;   //Przesuwa o 8 bitów w lewo
                 }
             }
+
             messageBin = Long.toBinaryString(binMessage);   //Po zapisaniu wartości binarnej w postaci stringa  zostanie ucięty pierwszy bajt jakim jest 0 dlatego trzeba dodać ten znak
             while (messageBin.length() % 64 != 0){
                 messageBin = "0" + messageBin;
@@ -62,4 +62,36 @@ public class Des {
         return messageBin;
     }
 
+    public String cheangeToBinKey(String key){
+
+        while (key.length() % 8 != 0) {
+            key += "\u0000";
+        }
+
+        long binKey = 0;
+
+        for(int i = 0; i < key.length(); i++) {
+
+            binKey += key.charAt(i);
+            if (i < 7) {
+                binKey <<= 8;
+            }
+        }
+
+        key = Long.toBinaryString(binKey);
+        while(key.length()%64 != 0){
+                key = "0" + key;
+            }
+
+
+        return key;
+    }
+
+
+    public  byte[][] generateSubKey(byte[] key){
+
+        byte[][] subKey = new byte[16][];
+
+        return subKey;
+    }
 }
