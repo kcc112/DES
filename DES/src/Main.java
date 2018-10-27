@@ -1,3 +1,4 @@
+import javax.swing.text.JTextComponent;
 import java.util.Arrays;
 
 public class Main {
@@ -22,14 +23,29 @@ public class Main {
         String keyCheanged = cipher.cheangeToBinKey(key);
         System.out.print("Klucz binarnie" + " " + keyCheanged + "\n");
 
-        keyB = cipher.bytePermutFunction(keyB,cipher.PC1);
+       // keyB = cipher.bytePermutFunction(keyB,cipher.PC1);
 
         System.out.println("String na bity po permutacji: " + Arrays.toString(keyB));
 
-        keyCheanged = cipher.stringPermutationFunc(keyCheanged,cipher.PC1);
+        //keyCheanged = cipher.stringPermutationFunc(keyCheanged,cipher.PC1);
         System.out.print("Klucz binarnie po permutacji" + " " + keyCheanged + "\n");
-        System.out.print(cipher.PC1[0]);
+        //System.out.print(cipher.PC1[0]+ "\n");
 
+        //int wynik = cipher.extractBit(keyB,55);
+        //System.out.print(wynik);
+
+        byte[][] subKeys = new byte[16][];
+
+        subKeys = cipher.generateByteSubKey(keyB);
+
+        for(int i = 0; i<16; i++){
+
+            for(int j = 0; j < 6; j++ ) {
+
+                System.out.print(subKeys[i][j] + " ");
+            }
+            System.out.print("\n");
+        }
 
 
     }
