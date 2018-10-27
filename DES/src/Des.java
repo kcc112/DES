@@ -2,6 +2,10 @@ import java.util.Arrays;
 
 public class Des {
 
+    public static byte[] PC1 = {57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18, 10, 2, 59, 51,
+            43, 35, 27, 19, 11, 3, 60, 52, 44, 36, 63, 55, 47, 39, 31, 23, 15, 7, 62, 54, 46, 38, 30, 22,
+            14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 28, 20, 12, 4};
+
     public long binMessage;
 
     public String cheangeToBin(String message) {
@@ -58,7 +62,6 @@ public class Des {
 
         System.out.println("Długość tablicy bitów: " + byteTable.length);
 
-
         return messageBin;
     }
 
@@ -83,15 +86,58 @@ public class Des {
                 key = "0" + key;
             }
 
-
         return key;
     }
 
 
-    public  byte[][] generateSubKey(byte[] key){
+    /*public  byte[][] generateSubKey(byte[] key){
 
-        byte[][] subKey = new byte[16][];
+        byte[][] subKeys = new byte[16][];
+        byte[] permKey = permutF(key, PC1);
 
         return subKey;
+    }*/
+
+
+    //Funkcja stringPermutationFunc pzryjmuje string i przeprowadza permutacje zgodnie z przesłana
+    //tabelą zwraca string po permutacji
+    public static String stringPermutationFunc(String text , byte[] table){
+
+        String textPermutated = "";
+
+        for(int i = 0; i < table.length; i++){
+
+            textPermutated += text.charAt(table[i] -1); // -1 bo tablice zaczynają sie od 0
+        }
+
+        return textPermutated;
     }
+
+    public static byte[] bytePermutFunction(byte[] input, byte[] table) {
+        int nrBytes = (table.length - 1) / 8 + 1;
+        byte[] output = new byte[nrBytes];
+        for (int i = 0; i < table.length; i++) {
+            int value = extractBit(input, table[i] - 1);
+            setBit(output, i, value);
+        }
+        return output;
+
+    }
+    private static int extractBit(byte[] data, int position) {
+        int bytePosition = position/ 8;
+        int bitPosition = position % 8;
+        byte temp = data[bytePosition];
+        int bit = temp >> (8 - (bitPosition + 1)) & 0x0001;
+        return bit;
+    }
+
+    private static void setBit(byte[] table, int position, int val) {
+        int bytePosition = position / 8;
+        int bitPosition = position % 8;
+        byte temp = table[bytePosition];
+        temp = (byte) (((0xFF7F >> bitPosition) & temp) & 0x00FF);
+        byte newByte = (byte) ((val << (8 - (bitPosition + 1))) | temp);
+        table[bytePosition] = newByte;
+    }
+
 }
