@@ -11,39 +11,37 @@ public class Des {
             30, 40, 51, 45, 33, 48, 44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29,
             32 };
 
-    private static int[] keyShifts = { 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2,
+    private static byte[] keyShifts = { 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2,
             2, 1 };
 
-    public long binMessage;
 
-    public String cheangeToBin(String message) {
+    public String[] cheangeToBin(String message) {
 
-
-        while (message.length() % 8 != 0) { //Dopuki nie bedzie mozna podzielić tekstu na minimum 8 znaków dpoisuj zank null
+        while (message.length() % 8 != 0) {
             message += "\u0000";
         }
 
-        int blockNumber = message.length()/8;   //Ilość bloków textu każdy blok zawiera 8 znaków
-        String[] tableMessageBin = new String[blockNumber];  //Tablice do , której zostanie zapisany text jako reprezętacja binarna
-        byte[] byteTable = message.getBytes();  //tablica do której zostaną zapisane bity
+        int blockNumber = message.length()/8;
+        String[] tableMessageBin = new String[blockNumber];
 
         String messageBin;
+
         for(int i = 0; i < blockNumber; i++){
 
-            String textBlock = message.substring(i*8 , i*8+8); //Podzielenie message na bloki po 8 znaków
+            String textBlock = message.substring(i*8 , i*8+8);
 
-            binMessage = 0;
+            long binMessage = 0;
 
             for(int j = 0; j < 8; j++){
 
-                binMessage += textBlock.charAt(j);  //Zwpisuje w Long wartość bloku textu
+                binMessage += textBlock.charAt(j);
 
                 if(j < 7) {
-                    binMessage <<= 8;   //Przesuwa o 8 bitów w lewo
+                    binMessage <<= 8;
                 }
             }
 
-            messageBin = Long.toBinaryString(binMessage);   //Po zapisaniu wartości binarnej w postaci stringa  zostanie ucięty pierwszy bajt jakim jest 0 dlatego trzeba dodać ten znak
+            messageBin = Long.toBinaryString(binMessage);
             while (messageBin.length() % 64 != 0){
                 messageBin = "0" + messageBin;
             }
@@ -52,28 +50,10 @@ public class Des {
 
         }
 
-        messageBin = Long.toBinaryString(binMessage);   //Zapisuje wartość binMessage w stringu
-
-        System.out.print("Wartość Long" + " " + binMessage +"\n");
-
-        int test = messageBin.length();
-
-        System.out.print("Długość tekstu" + " " + test +"\n");
-
-        System.out.print("Bity zapisane w tabel:");
-
-        System.out.print(Arrays.toString(tableMessageBin));
-
-        System.out.print("\n");
-
-        System.out.println("String na bity: " + Arrays.toString(byteTable));
-
-        System.out.println("Długość tablicy bitów: " + byteTable.length);
-
-        return messageBin;
+        return tableMessageBin;
     }
 
-    public String cheangeToBinKey(String key){
+    private static String cheangeToBinKey(String key){
 
         while (key.length() % 8 != 0) {
             key += "\u0000";
@@ -94,12 +74,14 @@ public class Des {
                 key = "0" + key;
             }
 
-        return key;
+            return key;
     }
+
+
 
     //Funkcja stringPermutationFunc pzryjmuje string i przeprowadza permutacje zgodnie z przesłana
     //tabelą zwraca string po permutacji
-    public static String stringPermutationFunc(String text , byte[] table){
+    private String stringPermutationFunc(String text , byte[] table){
 
         String textPermutated = "";
 
@@ -110,10 +92,64 @@ public class Des {
         return textPermutated;
     }
 
+    public String[] stringSubKey(String key){
+
+        String byteKey = cheangeToBinKey(key);
+        String keyAfterPerm = stringPermutationFunc(byteKey, PC1);
+        String[] subKeys = new String[16];
+        String subKey;
+
+        String L = keyAfterPerm.substring(0,28);;
+        String R = keyAfterPerm.substring(28,56);;
+
+        for(int i =1; i<17; i++){
+
+            L = stringKeyShifter(L , i);
+            R = stringKeyShifter(R , i);
+
+           subKey = L + R;
+
+           subKeys[i-1] = stringPermutationFunc(subKey, PC2 );
+        }
+
+        return subKeys;
+    }
+
+
+    private String stringKeyShifter(String half ,int value){
+
+        String healper;
+        String newText = "";
+
+        if(value == 1 || value == 2 || value == 9 || value == 16 ){
+
+            healper = half.substring(0,1);
+
+            for(int i = 1; i<28; i++){
+
+                newText += half.substring(i,i+1);
+            }
+
+            newText +=healper;
+        }
+        else{
+            healper = half.substring(0,1)+half.substring(1,2);
+
+            for(int i=0; i<26; i++) {
+
+                newText += half.substring(i+2,i+3);
+            }
+
+            newText +=healper;
+        }
+        return newText;
+    }
 
 
 
     ///////////////////////////DES using only []byte/////////////////////////////////////////
+
+
     public  byte[][] generateByteSubKey(byte[] key){
 
         byte[][] subKeys = new byte[16][];
@@ -124,12 +160,11 @@ public class Des {
 
         for(int i=0; i<16; i++){
             L = shiftKey(L , 28, keyShifts[i]);
-            R = shiftKey(L , 28, keyShifts[i]);
+            R = shiftKey(R , 28, keyShifts[i]);
 
             byte[] gluedKey = glueLefrRight(L,28, R,28);
             subKeys[i] = bytePermutFunction(gluedKey, PC2);
         }
-
         return subKeys;
     }
 
@@ -144,7 +179,6 @@ public class Des {
             setBit(output, i, value);
         }
         return output;
-
     }
 
     //Wyciąga bit znajdujacy się na kąkretnej pozycji w tablicy byte
@@ -176,7 +210,6 @@ public class Des {
             setBit(output, i, value);
         }
         return output;
-
     }
 
     //Przyjmuje połowę klucza z danej iteracji jej długość oraz o ile bitów zostało wykonane przesunięcie.
