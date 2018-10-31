@@ -202,9 +202,9 @@ public class Des {
 
         key = Long.toBinaryString(binKey);
         while(key.length()%64 != 0){
-                key = "0" + key;
-            }
-            return key;
+            key = "0" + key;
+        }
+        return key;
     }
 
 
