@@ -10,7 +10,7 @@ public class RandomKeyGenerator {
         char[] options = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray();
         char[] key = new char[len];
         for (int i = 0; i < len; i++) {
-            gKey += options[random.nextInt(options.length)];
+            gKey += options[random.nextInt(options.length)];//generuje int z zakresu od zera options.length
         }
         return gKey;
     }

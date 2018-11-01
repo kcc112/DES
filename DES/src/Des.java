@@ -79,156 +79,170 @@ public class Des {
             }
     };
 
-
+    //metoda przyjmuje text do zaszyfrowania i klucz zapisane
+    //jako stringi , zwraca tekst zaszyfrowany zapisany jako string w postaci szesnastkowej
     public String encrypt(String plainText, String key) {
 
         String cipherText = "";
-        String[] binText = cheangeToBin(plainText);
-        String[] subKeys = stringSubKey(key);
-        int blockNumber = binText.length;
+        String[] binText = cheangeToBin(plainText);//zamiana textu na postać binarną
+        String[] subKeys = stringSubKey(key);//generowanie 16 podkluczy
+        int blockNumber = binText.length;//ilość 64 bitowych bloków na które została podzielona wiadomość do zaszyfrowania
 
+        //Wykonanie permutacji IP na każdym 64 bitowym bloku , podzielenie ich na R – prawą L –lewą stronę
+        // oraz wykonanie na  R i L szesnastu operacji za pomocą funkcji Faistala
         for (int i = 0; i < blockNumber; i++) {
-            String permutedMessage = stringPermutationFunc(binText[i], IP);
-            String L = permutedMessage.substring(0, 32);
+            String permutedMessage = stringPermutationFunc(binText[i], IP);//permutacja IP
+            String L = permutedMessage.substring(0, 32);//podział 64 bnitów na dwie cząści
             String R = permutedMessage.substring(32, 64);
 
             for (int j = 0; j < 16; j++) {
                 String nextL = R;
-                R = functionFaistal(R, subKeys[j]);
-                R = xorFunction(L, R);
+                R = functionFaistal(R, subKeys[j]);//wykonanie funkcji faistala
+                R = xorFunction(L, R);//xorowanie prawej i lewej strony
                 L = nextL;
             }
-            cipherText += stringPermutationFunc(R + L, lastIP);
+            cipherText += stringPermutationFunc(R + L, lastIP);//wykonanie końcowej permutacji last IP na połączonej lewej i prawej stronie
         }
-        cipherText  = textToHex(cipherText, blockNumber);
+        cipherText  = textToHex(cipherText, blockNumber);//zamiana zaszyfrowanego tekstu na zapis szesnastkowy
         return cipherText;
     }
 
-    public String decript(String cipherMessage, String key) {
+    //Metoda przyjmuje zaszyfrowany text zapisany w stringu w postaci szesnastkowej oraz klucz , zwraca rozszyfrowany text
+    public String decrypt(String cipherMessage, String key) {
 
         String plainText = "";
-        String binText = hexTexttoBinText(cipherMessage);
-        String[] binTextArray = toArrayString(binText);
-        String[] subKeys = stringSubKey(key);
-        int blockNumber = binText.length()/64;
+        String binText = hexTexttoBinText(cipherMessage);//zamiana stringu zapisanego w hex na string zapisany w bin
+        String[] binTextArray = toArrayString(binText);//podzielenie textu  na bloki 64 bitowe
+        String[] subKeys = stringSubKey(key);//generowanie podkluczy
+        int blockNumber = binTextArray.length;//ilość 64 bitowych bloków na które została podzielona zaszyfrowana wiadomość
 
         for (int i = 0; i < blockNumber; i++) {
-            String permutedMessage = stringPermutationFunc(binTextArray[i], IP);
-            String L = permutedMessage.substring(0, 32);
+            String permutedMessage = stringPermutationFunc(binTextArray[i], IP);//permutacja IP
+            String L = permutedMessage.substring(0, 32);//podział 64 bnitów na dwie cząści
             String R = permutedMessage.substring(32, 64);
 
+            //wykonanie na  R i L szesnastu operacji za pomocą funkcji Faistala używanie odwrotnej kolejności kluczy aby rozszyfrować
             for (int j = 15; j >= 0; --j) {
                 String nextL = R;
-                R = functionFaistal(R, subKeys[j]);
-                R = xorFunction(L, R);
+                R = functionFaistal(R, subKeys[j]);//wykonanie funkcji faistala
+                R = xorFunction(L, R);//xorowanie prawej i lewej strony
                 L = nextL;
             }
-            plainText += stringPermutationFunc(R + L, lastIP);
+            plainText += stringPermutationFunc(R + L, lastIP);//wykonanie końcowej permutacji last IP na połączonej lewej i prawej stronie
         }
-        plainText  = chengeToString(plainText);
+        plainText  = chengeToString(plainText);//zamiana liczyby binarnej zapisanej jako string na text jawny
         return plainText;
     }
 
+    //metoda przyjmuje text dzieli go na 64 bitowe bloki i zapisuje je w tablicy stringów i ją zwraca
     private String[] toArrayString(String text){
 
         int blockNumber = text.length()/64;
-        String[] tableMessageBin = new String[blockNumber];
+        String[] tableMessageBin = new String[blockNumber];//tworzenie tablicy
         for (int i = 0; i < blockNumber; i++) {
-            tableMessageBin[i] = text.substring(i * 64, i * 64 + 64);
+            tableMessageBin[i] = text.substring(i * 64, i * 64 + 64);//rozdzielanie tekstu na bloki po 64 znaki i zapis do tablicy
         }
         return tableMessageBin;
     }
 
+    //metoda zamienia znaki zapisane w stringu na postać binarną a później tą postać zapisuje w stringu i ją zwraca
     private String[] cheangeToBin(String message){
 
-        while (message.length() % 4 != 0) message += "\u0000";
-        int blockNumber = message.length()/4;
-        String[] tableMessageBin = new String[blockNumber];
+        while (message.length() % 4 != 0) message += "\u0000";//dodawanie znaku NULL możliwe polskie litery dlatego co 4 znaki
+        int blockNumber = message.length()/4;//Ilość bloków po 4 znaki
+        String[] tableMessageBin = new String[blockNumber];//tworzenie tablicy stringów dla bloków po 64  znaki
         String messageBin = "";
 
         for (int i = 0; i < blockNumber; i++) {
 
-            String textBlock = message.substring(i*4, i*4+4);
-            long binMessage = 0;
+            String textBlock = message.substring(i*4, i*4+4);//wyciąganie ze stringu kolejno po 4 znaki
+            long binMessage = 0;//zmienna do zamiany na bin 64 bitowa
             String outputText = "";
 
             for (int j = 0; j < 4; j++){
-                binMessage = textBlock.charAt(j);
-                messageBin = Long.toBinaryString(binMessage);
+                binMessage = textBlock.charAt(j);//wyciąganie 1 z 4 znaków
+                messageBin = Long.toBinaryString(binMessage);//zapisanie binarnej wartości wyciągniętego znaku jako string
                 while (messageBin.length() % 16 != 0) {
-                    messageBin = "0" + messageBin;
+                    messageBin = "0" + messageBin;//ponieważ zera z lewej strony są ucinane należy je dopisać
                 }
                 outputText +=messageBin;
             }
-            tableMessageBin[i] = outputText;
+            tableMessageBin[i] = outputText;//zapisywanie do tablicy stringów
         }
         return tableMessageBin;
     }
 
+    //zamienia string na którym zapisana jest wartość binarna zna tekst zapisany za pomocą znaków alfanumerycznych
     private String chengeToString(String text){
 
         String outputText = "";
-        int blockNumber = text.length() / 16;
+        int blockNumber = text.length() / 16;//obliczanie ilości znaków
 
         for(int i = 0; i < blockNumber; i++){
-            String asciText = text.substring(i*16, i*16+16);
-            char asciChar = (char)Integer.parseInt(asciText,2);
+            String asciText = text.substring(i*16, i*16+16);//wyciąganie wartości binarnej zapisanej na strignu odpowiedzialnej za pojedynczy znak
+            char asciChar = (char)Integer.parseInt(asciText,2);//zamian na pojedynczy znak
             outputText += asciChar;
         }
         return  outputText;
     }
 
+    //zmiana stringu  na którym zapisana jest wartość bin  na  string na którym zapisana jest wartość hex
     private String textToHex(String text, int blockNumber) {
 
         String outputText = "";
 
         for (int i = 0; i < blockNumber * 16; i++) {
-            String hexText = text.substring(i * 4, (i * 4) + 4);
-            hexText = Integer.toHexString(Integer.parseInt(hexText, 2));
+            String hexText = text.substring(i * 4, (i * 4) + 4);//wyciąganie po 4 znaki
+            hexText = Integer.toHexString(Integer.parseInt(hexText, 2));//zamiana na 1 znak w hex
             outputText += hexText;
         }
         return outputText;
     }
 
+    //zamiana stringu na którym zapisany jest wartość hex na string na którym będzie zapisana wartość bin
     private String hexTexttoBinText(String text){
 
         int blockNumber = text.length();
         String outputText = "";
 
         for (int i = 0; i < blockNumber; i++ ){
-            String binText = text.substring(i , i+1);
-            binText = Integer.toBinaryString(Integer.parseInt(binText,16));
-            while (binText.length() % 4 != 0) binText = "0" + binText;
+            String binText = text.substring(i , i+1);//wyciąganie pojedynczego znaku w hex
+            binText = Integer.toBinaryString(Integer.parseInt(binText,16));//konwersja do postaci bin
+            while (binText.length() % 4 != 0) binText = "0" + binText;//ucina zera z lewej więc trzeba dopisać
             outputText += binText;
         }
         return outputText;
     }
 
+    //metoda przyjmuje prawą część textu i jeden podklucz zwraca text po wykonaniu funkcji Faistala
     private String functionFaistal(String text, String subKey) {
-        String permutedText = stringPermutationFunc(text, E);
-        String xoredText = xorFunction(permutedText, subKey);
-        String sBoxText = sBoxPermutation(xoredText);
-        String outputText = stringPermutationFunc(sBoxText, P);
+        String permutedText = stringPermutationFunc(text, E);//wykonanie permutacji E
+        String xoredText = xorFunction(permutedText, subKey);//xorowanie spermutowanego  tekstu zdanym podkluczem
+        String sBoxText = sBoxPermutation(xoredText);//wykonanie permutacji za pomocą sBoxów
+        String outputText = stringPermutationFunc(sBoxText, P);//wykonanie permutacji P
         return outputText;
     }
 
+    // metoda zwraca spermutowany text za pomocą sBoxów
     private String sBoxPermutation(String text) {
 
         String outputText = "";
 
         for (int i = 0; i < 8; i++) {
+            //pierwszy i ostatni znak tworzą binarnie wartość wiersz a 4 środkowe znaki kolumny przestawienie znaków tak aby wartość zapisana za pomocą stringu odpowiadały wierszą i kolumną
             String sixBitText = text.substring(i * 6, i * 6 + 6);
             String sixBitTextRow = "0000" + sixBitText.substring(0, 1) + sixBitText.substring(5, 6);
             String sixBitTextCol = "00" + sixBitText.substring(1, 5);
-            int arrayRow = Integer.parseInt(sixBitTextRow, 2);
+            int arrayRow = Integer.parseInt(sixBitTextRow, 2);//zamian wartości zapisanych w stringach na int
             int arrayCol = Integer.parseInt(sixBitTextCol, 2);
-            String fourBitText = Integer.toBinaryString(sBoxes[i][arrayRow][arrayCol]);
-            while (fourBitText.length() % 4 != 0) fourBitText = "0" + fourBitText;
+            String fourBitText = Integer.toBinaryString(sBoxes[i][arrayRow][arrayCol]);//zamiana int z tablicy sBox na binarną postać zapisaną jako string
+            while (fourBitText.length() % 4 != 0) fourBitText = "0" + fourBitText;//typical ucina  zera z lewej
             outputText += fourBitText;
         }
         return outputText;
     }
 
+    //xorowanie wartosci zapisanych jako  string
     private String xorFunction(String text, String subKey){
 
         String xored = "";
@@ -240,21 +254,23 @@ public class Des {
         return xored;
     }
 
+    //zamiana textu zapisanego  w stringu na jego odpowiednik w bin zapisany na stringu
     private String cheangeToBinKey(String key){
 
-        while (key.length() % 8 != 0) key += "\u0000";
+        while (key.length() % 8 != 0) key += "\u0000";//dopełnianie null do textu podzielnego przez 8
         long binKey = 0;
 
         for (int i = 0; i < key.length(); i++){
             binKey += key.charAt(i);
-            if (i < 7) binKey <<= 8;
+            if (i < 7) binKey = binKey << 8;//karzdy znaku na 8 bitach i przesunięcie jakby wskażnika
         }
 
-        key = Long.toBinaryString(binKey);
-        while (key.length() % 64 != 0) key = "0" + key;
+        key = Long.toBinaryString(binKey);//zapisanie wattości binarnej jako string
+        while (key.length() % 64 != 0) key = "0" + key;//oczywiście zera
         return key;
     }
 
+    //metoda przyjmuje jedną z tablic permutacyjnych oraz text i zwraca jego spermutowaną wartość
     private String stringPermutationFunc(String text, int[] table) {
 
         String textPermutated = "";
@@ -264,24 +280,27 @@ public class Des {
         return textPermutated;
     }
 
+    //generowanie tablicy podkluczy
     private String[] stringSubKey(String key) {
 
-        String byteKey = cheangeToBinKey(key);
-        String keyAfterPerm = stringPermutationFunc(byteKey, PC1);
-        String[] subKeys = new String[16];
+        String byteKey = cheangeToBinKey(key);//zamiana klucza na bina zapisany jako string
+        String keyAfterPerm = stringPermutationFunc(byteKey, PC1);// wykonanie permutacji PC1
+        String[] subKeys = new String[16];//tworzenie tablicy 16 kluczy
         String subKey;
-        String L = keyAfterPerm.substring(0, 28);
+        String L = keyAfterPerm.substring(0, 28);//podział prawa lewa
         String R = keyAfterPerm.substring(28, 56);
 
+        //odpowiednie przesunięcie pierwszego prawego znaku na prawą stronę  lub dwuch pierwszych
         for (int i = 1; i < 17; i++) {
-            L = stringKeyShifter(L, i);
+            L = stringKeyShifter(L, i);//metoda przesuwająca znaki
             R = stringKeyShifter(R, i);
-            subKey = L + R;
-            subKeys[i - 1] = stringPermutationFunc(subKey, PC2);
+            subKey = L + R;//połączenie lewej i prawej strony w jeden podklucz
+            subKeys[i - 1] = stringPermutationFunc(subKey, PC2);//wykonanie permutacji PC2
         }
         return subKeys;
     }
 
+    //metoda wykonuje odpowiednie przestawienia znaków w zależności od value - (który obrót)
     private String stringKeyShifter(String half, int value) {
 
         String healper;
